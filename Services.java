@@ -24,6 +24,7 @@ import edu.co.usbcali.ir.constants.PathsConstants;
 import edu.co.usbcali.ir.processes.Cluster;
 import edu.co.usbcali.ir.processes.ExtractReutersNews;
 import edu.co.usbcali.ir.processes.Indexer;
+import edu.co.usbcali.ir.processes.InternalEvaluation;
 import edu.co.usbcali.ir.processes.Searcher;
 import edu.co.usbcali.ir.util.TextFileFilter;
 
@@ -82,6 +83,7 @@ public class Services
                 
                 JSONObject d = new JSONObject();
                 d.put("path", doc.get(LuceneConstants.FILE_PATH));
+                d.put("score", scoreDoc.score);
                 
                 if (cluster)
                 {
@@ -95,7 +97,34 @@ public class Services
                 docs.add(d);
             }
             
+            JSONArray tests = new JSONArray();
+            
+            if (cluster)
+            {
+                InternalEvaluation internalEval = new InternalEvaluation(clusters, hits.scoreDocs);
+                
+                float ssbResult = internalEval.getSSBResult();
+                float sswResult = internalEval.getSSWResult();
+                float silResult = 0;
+                
+                JSONObject ssb = new JSONObject();
+                ssb.put("type", "ssb");
+                ssb.put("value", ssbResult);
+                tests.add(ssb);
+                
+                JSONObject ssw = new JSONObject();
+                ssw.put("type", "ssw");
+                ssw.put("value", sswResult);
+                tests.add(ssw);
+                
+                JSONObject sil = new JSONObject();
+                sil.put("type", "silhouette");
+                sil.put("value", silResult);
+                tests.add(sil);
+            }
+            
             json.put("documents", docs);
+            json.put("tests", tests);
             json.put("time", (endTime - startTime));
             
             return Response.status(200).entity(json.toJSONString()).build();

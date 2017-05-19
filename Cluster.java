@@ -93,7 +93,9 @@ public class Cluster
     private List<Float> getClusterSSE(List<List<Integer>> clusters, ScoreDoc[] scoreDocs)
     {
         List<Float> clustersSSE = new ArrayList<>();
-        List<Float> centroids = getClusterCentroid(clusters, scoreDocs);
+        
+        InternalEvaluation internalEval = new InternalEvaluation(clusters, scoreDocs);
+        List<Float> centroids = internalEval.getCentroids();
         
         for (int i = 0; i < clusters.size(); i++)
         {
@@ -117,48 +119,9 @@ public class Cluster
     }
     
     /**
-     * Gets the centroid for each cluster
-     * @param clusters Documents clustering
-     * @param scoreDocs Recovered documents to get the score per document
-     * @return List with centroids for each cluster
-     */
-    private List<Float> getClusterCentroid(List<List<Integer>> clusters, ScoreDoc[] scoreDocs)
-    {
-        List<Float> centroids = new ArrayList<>();
-        
-        for (int i = 0; i < clusters.size(); i++)
-        {
-            List<Integer> cluster = clusters.get(i);
-            
-            float scoreAcum = 0;
-            float docCount = 0;
-            
-            for (Integer docIndex : cluster)
-            {
-                if (docIndex < scoreDocs.length)
-                {
-                    docCount++;
-                    scoreAcum += scoreDocs[docIndex].score;
-                }
-            }
-            
-            float centroid = 0;
-            if (docCount != 0)
-            {
-                float docsDiv = 1 / docCount;
-                centroid = docsDiv * scoreAcum;
-            }
-            
-            centroids.add(centroid);
-        }
-        
-        return centroids;
-    }
-    
-    /**
      * Sum the SSE result for each cluster
      * @param clustersSSE SSE for each cluster
-     * @return Sum of the clusters´ SSE
+     * @return Sum of the clusters' SSE
      */
     private float getLineSSE(List<Float> clustersSSE)
     {
